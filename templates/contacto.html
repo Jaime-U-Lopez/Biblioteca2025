@@ -1,0 +1,59 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/StyleContacto.css') }}">
+    <script src="/static/js/reserva.js" defer></script>
+</head>
+<body>
+    <h1> Pagina de Contacto </h1>
+    <nav>
+
+        <a href="{{ url_for('home') }}">Inicio</a>
+        <a href="{{ url_for('contacto') }}">Contacto</a>
+        <a href="{{ url_for('reservar') }}">Reserva</a>
+        {% if "usuario_id" in session %}
+        <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+        {% endif %}
+    </nav>
+    <h2>Déjanos tu mensaje</h2>
+
+
+    <form action="{{ url_for('contacto') }}" method="post">
+        <label for="nombre">Nombre y apellido:</label>
+        <input type="text" id="nombre" name="nombre" required>
+
+        <label for="email">Correo Electrónico:</label>
+        <input type="email" id="email" name="email" required>
+
+        <label for="mensaje">Mensaje:</label>
+        <textarea id="mensaje" name="mensaje" rows="4" required></textarea>
+
+        <button type="submit">Enviar</button>
+    </form>
+
+</body>
+
+    <!-- Agregar SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Mostrar mensajes flash con Swal -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        let flashMessages = {{ get_flashed_messages(with_categories=true) | tojson }};
+        
+        if (flashMessages.length > 0) {
+            flashMessages.forEach(([category, message]) => {
+                Swal.fire({
+                    icon: category === "success" ? "success" : "error",
+                    title: message
+                });
+            });
+        }
+    });
+    </script>
+</html>

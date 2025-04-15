@@ -1,0 +1,32 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/StyleLogin.css') }}">
+
+
+</head>
+<body>
+
+    <div class="container">
+        <h1>Login</h1>
+        <p class="descripcion">
+            Nuestra biblioteca ofrece una amplia colección de libros y recursos digitales. 
+            ¡Explora, aprende y descubre todo lo que tenemos para ti!
+        </p>
+
+        <form action="{{ url_for('loginUsuario') }}" method="POST">
+            <input type="email" name="email" placeholder="Correo electrónico" required>
+            <input type="password" name="password" placeholder="Contraseña" required>
+            <button type="submit">Ingresar</button>
+        </form>
+
+        <a href="{{ url_for('loginUsuario') }}" class="link">¿No tienes cuenta? Regístrate</a>
+    </div>
+
+</body>
+</html>

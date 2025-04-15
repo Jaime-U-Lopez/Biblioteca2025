@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrar Usuarios</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/StyleContacto.css') }}">    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <!-- CDN SweetAlert2 -->
+    <style>
+        /* Estilos para el modal */
+        .modal {
+            display: none; /* Oculto por defecto */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 40%;
+            text-align: center;
+        }
+
+        .close {
+            color: red;
+            float: right;
+            font-size: 25px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: darkred;
+        }
+    </style>
+</head>
+<body>
+    
+    <h1> Administrar Usuarios </h1>
+    <nav>
+        <a href="{{ url_for('home') }}">Inicio</a>
+        <a href="{{ url_for('contacto') }}">Contacto</a>
+        <a href="{{ url_for('reservar') }}">Reserva</a>
+        <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+    </nav>
+
+    <!-- Botón para abrir el modal -->
+    <button onclick="abrirModal()">+ Registrar Usuario</button>
+
+    <!-- MODAL -->
+    <div id="modalRegistro" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarModal()">&times;</span>
+            <h2>Registrar Usuario</h2>
+            <form action="{{ url_for('usuarios') }}" method="POST">
+                <label for="nombre">Nombre:</label>
+                <input type="text" id="nombre" name="nombre" required>
+
+                <label for="rol">Rol:</label>
+                <select id="rol" name="rol" required>
+                    <option value="administrador">Administrador</option>
+                    <option value="usuario">usuario</option>
+                </select>
+
+                <label for="email">Correo Electrónico:</label>
+                <input type="email" id="email" name="email" required>
+
+                <label for="password">Contraseña:</label>
+                <input type="password" id="password" name="password" required>
+
+                <button type="submit">Registrar</button>
+            </form>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- BUSCAR USUARIOS -->
+    <h2>Lista de Usuarios</h2>
+    <input type="text" id="buscarUsuario" placeholder="Buscar usuario..." onkeyup="filtrarUsuarios()">
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="tablaUsuarios">
+            {% for usuario in usuarios %}
+            <tr id="usuario-{{ usuario.id }}">  <!-- Se agrega ID único a cada fila -->
+                <td>{{ usuario.id }}</td>
+                <td class="nombre">{{ usuario.nombre }}</td>
+                <td class="email">{{ usuario.email }}</td>
+                <td>
+                    <button onclick="editarUsuario('{{ usuario.id }}', '{{ usuario.nombre }}', '{{ usuario.email }}')">✏️ Editar</button>
+                    <button onclick="eliminarUsuario('{{ usuario.id }}')">🗑️ Eliminar</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+
+    <script>
+        // Mostrar el modal
+        function abrirModal() {
+            document.getElementById("modalRegistro").style.display = "flex";
+        }
+
+        // Cerrar el modal
+        function cerrarModal() {
+            document.getElementById("modalRegistro").style.display = "none";
+        }
+
+        // Buscar usuarios
+        function filtrarUsuarios() {
+            let input = document.getElementById("buscarUsuario").value.toLowerCase();
+            let filas = document.getElementById("tablaUsuarios").getElementsByTagName("tr");
+            for (let i = 0; i < filas.length; i++) {
+                let nombre = filas[i].getElementsByTagName("td")[1];
+                if (nombre) {
+                    let texto = nombre.textContent || nombre.innerText;
+                    filas[i].style.display = texto.toLowerCase().includes(input) ? "" : "none";
+                }
+            }
+        }
+
+        function editarUsuario(id, nombre, email) {
+            Swal.fire({
+                title: "Editar Usuario",
+                html: `
+                    <input type="text" id="nuevoNombre" class="swal2-input" value="${nombre}">
+                    <input type="email" id="nuevoEmail" class="swal2-input" value="${email}">
+                `,
+                showCancelButton: true,
+                confirmButtonText: "Guardar",
+                preConfirm: () => {
+                    let nuevoNombre = document.getElementById("nuevoNombre").value;
+                    let nuevoEmail = document.getElementById("nuevoEmail").value;
+
+                    return fetch(`/usuarios/${id}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ nombre: nuevoNombre, email: nuevoEmail })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Actualizar la fila de la tabla con los nuevos datos
+                            let fila = document.querySelector(`#usuario-${id}`);
+                            fila.querySelector(".nombre").textContent = nuevoNombre;
+                            fila.querySelector(".email").textContent = nuevoEmail;
+
+                            // Actualizar el botón de editar con los nuevos valores
+                            //fila.querySelector(".btn-editar").setAttribute("onclick", `editarUsuario('${id}', '${nuevoNombre}', '${nuevoEmail}')`);
+                            fila.querySelector("button").setAttribute(
+                                "onclick",
+                                `editarUsuario('${id}', '${nuevoNombre}', '${nuevoEmail}')`
+                            );
+
+
+                            Swal.fire("Actualizado", "Usuario actualizado correctamente", "success");
+                        } else {
+                            Swal.fire("Error", "No se pudo actualizar el usuario", "error");
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error:", error);
+                        Swal.fire("Error", "Ocurrió un error en el servidor", "error");
+                    });
+                }
+            });
+        }
+
+
+        // Mostrar mensajes flash con SweetAlert2
+        document.addEventListener("DOMContentLoaded", function () {
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                Swal.fire({
+                    icon: "{{ category }}",
+                    title: "{{ message }}",
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+        });
+
+        function eliminarUsuario(id) {
+            Swal.fire({
+                title: "¿Estás seguro?",
+                text: "No podrás revertir esta acción",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Sí, eliminar",
+                cancelButtonText: "Cancelar"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/usuarios/${id}`, {
+                        method: "DELETE",
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: "Eliminado",
+                                text: "Usuario eliminado correctamente",
+                                icon: "success",
+                                timer: 2000,  // Se cierra automáticamente en 2 segundos
+                                showConfirmButton: false
+                            });
+
+                            // 🔥 Eliminar la fila sin recargar la página
+                            const filaUsuario = document.getElementById(`usuario-${id}`);
+                            if (filaUsuario) {
+                                filaUsuario.remove();
+                            }
+                        } else {
+                            Swal.fire("Error", "No se pudo eliminar el usuario", "error");
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error:", error);
+                        Swal.fire("Error", "Ocurrió un problema al eliminar", "error");
+                    });
+                }
+            });
+        }
+
+
+
+    </script>
+
+</body>
+</html>

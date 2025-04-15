@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reserva de Libros</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/StyleReserva.css') }}">
+
+    <script src="{{ url_for('static', filename='js/reserva.js') }}" defer></script>
+    
+</head>
+<body>
+    <h1>Reserva de Libros</h1>
+    <nav>
+        <a href="{{ url_for('home') }}">Inicio</a>
+        <a href="{{ url_for('contacto') }}">Contacto</a>
+        {% if "usuario_id" in session %}
+        <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+        {% endif %}
+    </nav>
+
+    <div class="container">
+        <div class="search-section">
+            <h2>Buscar un Libro</h2>
+            <input type="text" id="search" placeholder="Escribe el nombre del libro" style="width: 400px; height: 40px; font-size: 16px;">
+            <button onclick="buscarLibro()">Buscar</button>
+
+            <h2>Libros Disponibles</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Título</th>
+                        <th>Autor</th>
+                        <th>Seleccionar</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-libros">
+                    {% for libro in libros %}
+                    <tr>
+                        <td>{{ libro.id }}</td>
+                        <td>{{ libro.titulo }}</td>
+                        <td>{{ libro.autor }}</td>
+                        <td><button onclick="abrirModal(event)">Ver más</button></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="history-section">
+            <h2>Historial de Reservas</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>id</th>
+                        <th>Título</th>
+                        <th>Autor</th>
+                        <th>Fecha de Reserva</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reserva in reservas %}
+                    <tr>
+                        <td>{{ reserva.id }}</td>
+                        <td>{{ reserva.titulo }}</td>
+                        <td>{{ reserva.autor }}</td>
+                        <td>{{ reserva.fecha_reserva.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>{{ reserva.estado }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarModal()">&times;</span>
+            <h2 id="modal-id"></h2> 
+            <h2 id="modal-titulo"></h2>
+            <p><strong>Autor:</strong> <span id="modal-autor"></span></p>
+            <button onclick="reservarLibro()">Reservar</button>
+        </div>
+    </div>
+
+    <script>
+        let libroSeleccionado = null;
+
+        function abrirModal(event) {
+            // Obtener la fila donde se hizo clic
+            let fila = event.target.closest("tr");
+
+            // Extraer la información del libro desde la fila
+            let id = fila.cells[0].innerText;
+            let titulo = fila.cells[1].innerText;
+            let autor = fila.cells[2].innerText;
+            let fecha_reserva = "2025/03/30";
+            let estado = "Reservada";
+
+
+            // Guardar los datos en una variable global
+            libroSeleccionado = {
+                id : id,
+                fecha_reserva: fecha_reserva,
+                estado: estado
+            };
+
+            // Insertar la información en el modal
+            document.getElementById("modal-id").innerText = id;
+            document.getElementById("modal-titulo").innerText = titulo;
+            document.getElementById("modal-autor").innerText = autor;
+
+            // Mostrar el modal
+            document.getElementById("modal").style.display = "block";
+        }
+
+        function cerrarModal() {
+            document.getElementById("modal").style.display = "none";
+        }
+
+        function buscarLibro() {
+            const query = document.getElementById("search").value;
+            fetch(`/buscar_libro?q=${query}`)
+            .then(response => response.json())
+            .then(data => {
+                let tbody = document.getElementById("tabla-libros");
+                tbody.innerHTML = ""; // Limpiar resultados anteriores
+                data.forEach(libro => {
+                    let row = `<tr>
+                        <td>${libro.titulo}</td>
+                        <td>${libro.autor}</td>
+                        <td><button onclick="abrirModal(event)">Ver más</button></td>
+                    </tr>`;
+                    tbody.innerHTML += row;
+                });
+            })
+            .catch(error => console.error("Error en la búsqueda:", error));
+        }
+
+        function reservarLibro() {
+            if (!libroSeleccionado) return;
+
+            fetch("/confirmar_reserva", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ id: libroSeleccionado.id, estado: libroSeleccionado.estado, fecha_reserva: libroSeleccionado.fecha_reserva })
+            })
+            .then(response => response.json())
+            .then(data => {
+
+                Swal.fire({
+                    icon: "success",
+                    title: data.message,  // Mensaje de Flask
+                    timer: 2000,  // ⏳ La alerta durará 2 segundos
+                    timerProgressBar: true,  // 🔵 Barra de progreso para indicar el cierre
+                    showConfirmButton: false  // ❌ No mostrar el botón "OK"
+                }).then(() => {
+                    cerrarModal();
+                    location.reload(); // Refrescar la página después de cerrar la alerta
+                });
+            })
+            .catch(error => console.error("Error al reservar:", error));
+        }
+    </script>
+</body>
+
+</html>

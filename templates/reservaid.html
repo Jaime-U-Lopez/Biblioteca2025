@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reserva de Libro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+
+    <script src="/static/js/reserva.js" defer></script>
+
+</head>
+<body>
+    <div>
+        <h1>¡Bienvenido, {{ nombre }}!</h1>
+    </div>
+
+    <nav>
+        <a href="{{ url_for('contacto') }}">Contacto</a>
+        <a href="{{ url_for('reservar') }}">Reserva</a>
+        <a href="{{ url_for('agregar_libro') }}">Agregar Libros</a>
+        <a href="{{ url_for('usuarios') }}">Registrar Usuario</a>
+        {% if "usuario_id" in session %}
+        <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+        {% endif %}
+
+    </nav>
+    <h1>Reserva de Libro</h1>
+    <p><strong>ID:</strong> {{ libro.id }}</p>
+    <p><strong>Título:</strong> {{ libro.titulo }}</p>
+    <p><strong>Autor:</strong> {{ libro.autor }}</p>
+    <p><strong>Editor:</strong> {{ libro.editor }}</p>
+    <p><strong>Año:</strong> {{ libro.anio }}</p>
+    <p><strong>Precio:</strong> ${{ libro.precio }}</p>
+   
+    <p>
+    <img src="{{ libro.imagen }}" alt="Imagen del libro" class="img-miniatura">
+    </p>
+   
+    <button onclick="reservarLibro({{ libro.id }})">Reservar</button>
+
+    <button onclick="cancelarReserva({{ libro.id }})">Cancelar</button>
+</body>
+
+
+<script>
+
+
+
+function reservarLibro(id) {
+    fetch("/confirmar_reserva", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ id: id })
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert("Reserva realizada con éxito");
+        window.location.href = "/home"; // Redirigir al inicio
+    })
+    .catch(error => console.error("Error al reservar:", error));
+}
+
+
+function cancelarReserva(id) {
+    if (confirm("¿Estás seguro de cancelar la reserva?")) {
+        // Aquí podrías redirigir o hacer una llamada AJAX
+        window.location.href = `/cancelar_reserva/${id}`;
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+
+let flashMessages = {{ get_flashed_messages(with_categories=true) | tojson }};
+    
+    if (flashMessages.length > 0) {
+        flashMessages.forEach(([category, message]) => {
+            Swal.fire({
+                icon: category === "success" ? "success" : "error",
+                title: message
+            });
+        });
+    }
+
+});
+
+</script>
+<script src="{{ url_for('static', filename='js/reserva.js') }}" defer></script>
+
+</html>

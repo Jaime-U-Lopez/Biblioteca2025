@@ -1,0 +1,64 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/StyleContacto.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/reserva.js') }}" defer></script>
+
+    
+</head>
+<body>
+    
+    <h1>  Biblioteca 2025 </h1>
+
+    <div>
+        <h1>¡Bienvenido, {{ nombre }}!</h1>
+    </div>
+
+    <nav>
+        <a href="{{ url_for('contacto') }}">Contacto</a>
+        <a href="{{ url_for('reservar') }}">Reserva</a>
+
+        {% if rol == 'administrador' %}
+        <a href="{{ url_for('agregar_libro') }}">Agregar Libros</a>
+        <a href="{{ url_for('usuarios') }}">Registrar Usuario</a>
+        <a href="{{ url_for('admin_reservas') }}">Reservas Pendientes</a>
+
+         {% endif %}
+
+
+     
+        {% if "usuario_id" in session %}
+        <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+        {% endif %}
+    </nav>
+
+  <img width="550px" height="150px" src="{{ url_for('static', filename='img/ImagenBiblioteca1.jpg') }}" alt="Imagen de Biblioteca">
+
+  <h2>Libros Disponibles</h2>
+  <div class="container">
+      {% for libro in libros %}
+      <div class="card">
+          <img src="{{ libro.imagen }}" alt="Imagen del libro">
+          <h3>{{ libro.titulo }}</h3>
+          <p><strong>Autor:</strong> {{ libro.autor }}</p>
+          <p><strong>Editor:</strong> {{ libro.editor }}</p>
+          <p><strong>Año:</strong> {{ libro.anio }}</p>
+          <p><strong>Disponibilidad:</strong> {{ libro.disponibilidad }}</p>
+          <a href="{{ url_for('reservaid', id=libro.id) }}" class="btn">Reservar</a>
+      </div>
+      {% endfor %}
+  </div>
+
+  <p class="descripcion">
+      Nuestra biblioteca ofrece una amplia colección de libros y recursos digitales. 
+      ¡Explora, aprende y descubre todo lo que tenemos para ti!
+  </p>
+
+</body>
+</html>

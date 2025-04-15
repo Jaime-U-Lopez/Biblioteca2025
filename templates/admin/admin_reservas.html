@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Reservas</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/StyleReserva.css') }}">
+</head>
+<body>
+    <h1>Reservas Pendientes</h1>
+    <nav>
+        <a href="{{ url_for('home') }}">Inicio</a>
+        <a href="{{ url_for('contacto') }}">Contacto</a>
+        {% if "usuario_id" in session %}
+        <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+        {% endif %}
+    </nav>
+
+<div>
+
+
+    <form method="GET" action="{{ url_for('admin_reservas') }}" class="filtro-form">
+        <div class="campo">
+            <label for="estado">Estado:</label>
+            <select name="estado" id="estado">
+                <option value="" {% if not estado_seleccionado %}selected{% endif %}>Todos</option>
+                <option value="Pendiente" {% if estado_seleccionado == "Pendiente" %}selected{% endif %}>Pendiente</option>
+                <option value="Aprobada" {% if estado_seleccionado == "Aprobada" %}selected{% endif %}>Aprobada</option>
+                <option value="Rechazada" {% if estado_seleccionado == "Rechazada" %}selected{% endif %}>Rechazada</option>
+            </select>
+        </div>
+    
+        <div class="campo">
+            <label for="fecha_inicio">Desde:</label>
+            <input type="date" name="fecha_inicio" id="fecha_inicio" value="{{ fecha_inicio }}">
+        </div>
+    
+        <div class="campo">
+            <label for="fecha_fin">Hasta:</label>
+            <input type="date" name="fecha_fin" id="fecha_fin" value="{{ fecha_fin }}">
+        </div>
+    
+        <div class="campo">
+            <button type="submit">Filtrar</button>
+        </div>
+    </form>
+    
+
+
+
+    <table border="25">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Título</th>
+                <th>Autor</th>
+                <th>Usuario</th>
+                <th>Fecha</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reserva in reservas %}
+            <tr>
+                <td>{{ reserva.id }}</td>
+                <td>{{ reserva.titulo }}</td>
+                <td>{{ reserva.autor }}</td>
+                <td>{{ reserva.nombre_usuario}}</td>
+                <td>{{ reserva.fecha_reserva.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td>
+                    <button onclick="procesarReserva({{ reserva.id }}, 'aprobar')">Aprobar</button>
+                    <button onclick="procesarReserva({{ reserva.id }}, 'rechazar')">Rechazar</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+   
+
+    <script>
+        function procesarReserva(id, accion) {
+            fetch(`/admin/reserva/${id}/${accion}`, {
+                method: "POST"
+            })
+            .then(response => response.json())
+            .then(data => {
+                Swal.fire({
+                    icon: "success",
+                    title: data.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => location.reload());
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error al procesar reserva"
+                });
+                console.error("Error:", error);
+            });
+        }
+    </script>
+</body>
+</html>
